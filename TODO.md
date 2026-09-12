@@ -1,7 +1,8 @@
 
 # TODO
 
-- Document generation
+- output_path choice
+- Unit variable input validation
 - Encoding error fix
 - Dynamic date formating
 - Test 'UNIT.' variable names
