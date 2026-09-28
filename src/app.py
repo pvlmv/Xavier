@@ -2,8 +2,6 @@ import os
 import document_generator as docG
 from PySide6 import QtCore, QtWidgets
 
-OUTPUT_PATH = 'example_output.docx'
-
 class Window(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()
@@ -44,14 +42,16 @@ class Window(QtWidgets.QWidget):
                     choices[name] = {'path':"./items/"+docG.find_fitting_items(docG.expect_items_from_docx(template_path)[name])[widget.currentText().split(' [')[0]], 'id':widget.currentText().split(' [')[0]}
             return choices
         
-        def generate_document_and_leave(choices:dict[str, str]):
-            docG.generate_docx_with_applied_item(template_path,OUTPUT_PATH, docG.generate_final_input_item(docG.expect_items_from_docx(template_path), get_choices(choices)))
+        def generate_document_and_leave(choices:dict[str, str], output_path:str = "output.docx"):
+            docG.generate_docx_with_applied_item(template_path,"./"+output_path, docG.generate_final_input_item(docG.expect_items_from_docx(template_path), get_choices(choices)))
             self.home()
-        
+      
         self.clear_layout()
+        
         back_button = QtWidgets.QPushButton("Back")
         back_button.clicked.connect(self.home)
         self.layout.addWidget(back_button)
+        
         choices = dict()
         for expected_item_name, expected_item_attributes in docG.expect_items_from_docx(template_path).items():
             if expected_item_name == "UNIT":
@@ -70,6 +70,12 @@ class Window(QtWidgets.QWidget):
             self.layout.addWidget(QtWidgets.QLabel(f"Choose {expected_item_name}:"))
             self.layout.addWidget(drop_down)
         
+        line_edit = QtWidgets.QLineEdit()
+        setattr(self, "output_file_name_line_edit", line_edit)
+        output_path = line_edit
+        self.layout.addWidget(QtWidgets.QLabel(f"Enter Output file name:"))
+        self.layout.addWidget(line_edit)
+        
         button = QtWidgets.QPushButton("Generate Document")
-        button.clicked.connect(lambda: generate_document_and_leave(choices))
+        button.clicked.connect(lambda: generate_document_and_leave(choices, output_path.text() if output_path.text().endswith(".docx") else output_path.text()+".docx"))
         self.layout.addWidget(button)

@@ -5,23 +5,34 @@ from datetime import datetime
 from docx import Document
 from PySide6.QtCore import Slot
 
+def substitute_with_current_date(text:str) -> str:
+    date_to_replace = re.findall(r"\$`current_date_formated\(?.*\)?`", text)
+    if date_to_replace == []:
+        return text
+    
+    for date in date_to_replace:
+        format = date.split("(")[1].split(")")[0] if date.__contains__("(") else "%d.%m.%Y"
+        text = re.sub(rf"\$`current_date_formated\(.*\)`", datetime.now().strftime(format), text)
+    return text
+
 @Slot()
 def generate_docx_with_applied_item(template_path: str, output_path: str, item : dict[str, str | list[str]]):
     Document(template_path).save(output_path)
     document = Document(output_path)
-    values = dict(item)
+    values : dict[str, callable] = {name: lambda text, name=name: re.sub(rf"\$`{re.escape(name)}`", str(item[name]), text) for name in item.keys()}
     
-    values["current_date_formated(%d.%m.%Y)"] = datetime.now().strftime("%d.%m.%Y") # TO BE MODIFIED: Add dynamic date formating
+    values["current_date_formated"] = substitute_with_current_date
     
     for paragraph in document.paragraphs:
-        for variable, value in values.items():
-            paragraph.text = re.sub(rf"\$`{re.escape(variable)}`", str(value), paragraph.text)
+        if paragraph.text.__contains__("$`"):
+            for variable_name, replacer_function in values.items():
+                paragraph.text = replacer_function(paragraph.text)
     document.save(output_path)
     # os.system(f"start {output_path}") Open generated document
     
 @Slot()
 def get_item_list_from_csv(csv_path: str) -> list[dict[str, str]]:
-    with open(csv_path, 'r') as f:
+    with open(csv_path, 'r', encoding='utf-8') as f:
         item_list = [{k: v for k, v in row.items()} for row in csv.DictReader(f, skipinitialspace=True)]
     return item_list
 
@@ -29,7 +40,7 @@ def get_item_list_from_csv(csv_path: str) -> list[dict[str, str]]:
 def expect_items_from_docx(template_path: str) -> dict[str, list[str]]:
     document = Document(template_path)
     text = "\n".join([paragraph.text for paragraph in document.paragraphs])
-    unit_variables = [re.sub("\\$?\\`","",var) for var in list(set(re.findall("\\$`\\w+`", text)))]
+    unit_variables = [re.sub("\\$?\\`","",var) for var in list(set(re.findall("\\$`[UNIT.]?\\w+`", text)))]
     item_variables = [re.sub("\\$?\\`","",var) for var in list(set(re.findall("\\$`\\w+[.]\\w+`", text)))]
 
     items = dict()
