@@ -76,6 +76,9 @@ SOFTWARE.
 
 ## Windows distribution
 
+A prebuilt executable is available from the
+[windows-download branch](https://github.com/pvlmv/Xavier/blob/windows-download/Xavier.zip).
+
 Build on Windows from the project root with the project environment activated:
 
 ```powershell
