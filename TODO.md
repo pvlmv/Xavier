@@ -1,9 +1,6 @@
 
 # TODO
 
-- Unit variable input validation
-- Test 'UNIT.' variable names
-- Setting for opening the generated document automatically/opening directory/doing nothing
 - Clean UI
 - Create .exe version
 - Create macOS version

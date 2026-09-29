@@ -6,21 +6,54 @@ from docx import Document
 from PySide6.QtCore import Slot
 
 def substitute_with_current_date(text:str) -> str:
-    date_to_replace = re.findall(r"\$`current_date_formated\(?.*\)?`", text)
+    def get_date_format(date:str="") -> str:
+        format = "%d.%m.%Y"
+        if date.__contains__("(") and date.replace("(","")[1].split(")")[0].strip()!="":
+            format = date.split("(")[1].split(")")[0]
+        else:
+            try:
+                with open("./config.txt") as f:
+                    for line in f.readlines():
+                        if line.split(' ')[0] == "default_date_format": 
+                            format = " ".join(line.split(' ')[1::])
+                            break
+                        else: format = "%d.%m.%Y"
+            except:
+                format = "%d.%m.%Y"
+        return format
+    
+    text = re.sub(rf"\$`current_date_formated\(\)`|\$`current_date_formated`",datetime.now().strftime(get_date_format()),text)
+    
+    date_to_replace = re.findall(rf"\$`current_date_formated\(?.*\)?`", text)
     if date_to_replace == []:
         return text
     
     for date in date_to_replace:
-        format = date.split("(")[1].split(")")[0] if date.__contains__("(") else "%d.%m.%Y"
-        text = re.sub(rf"\$`current_date_formated\(.*\)`", datetime.now().strftime(format), text)
+        format = get_date_format(date)
+        text = re.sub(rf"\$`current_date_formated\({re.escape(format)}\)`", datetime.now().strftime(format), text)
     return text
+
+PRESET_VARIABLES = {
+    "current_date_formated" : substitute_with_current_date,
+}
+
+def open_word_document(docx_path: str):
+    if os.name != "nt":
+        raise OSError("Opening a Word document with the Windows file association requires Windows.")
+
+    absolute_path = os.path.abspath(docx_path)
+    if not os.path.isfile(absolute_path):
+        raise FileNotFoundError(f"Word document not found: {absolute_path}")
+
+    os.startfile(absolute_path, "open")
+
 
 @Slot()
 def generate_docx_with_applied_item(template_path: str, output_path: str, item : dict[str, str | list[str]]):
     Document(template_path).save(output_path)
     document = Document(output_path)
-    values : dict[str, callable] = {name: lambda text, name=name: re.sub(rf"\$`{re.escape(name)}`", str(item[name]), text) for name in item.keys()}
-    
+    values : dict[str, callable] = {name: lambda text, name=name: re.sub(rf"\$\`UNIT\.{re.escape(name)}\`|\$\`\.?{re.escape(name)}\`", str(item[name]), text) for name in item.keys()}
+    values.update(PRESET_VARIABLES)
     values["current_date_formated"] = substitute_with_current_date
     
     for paragraph in document.paragraphs:
@@ -28,7 +61,11 @@ def generate_docx_with_applied_item(template_path: str, output_path: str, item :
             for variable_name, replacer_function in values.items():
                 paragraph.text = replacer_function(paragraph.text)
     document.save(output_path)
-    # os.system(f"start {output_path}") Open generated document
+    try:
+        with open("./config.txt") as f:
+            if any([line.split(' ')[0] == "open_file_after_generation" and line.split(' ')[1].strip().lower() == "true" for line in f.readlines()]):
+                open_word_document(output_path)
+    except:None
     
 @Slot()
 def get_item_list_from_csv(csv_path: str) -> list[dict[str, str]]:
@@ -37,11 +74,11 @@ def get_item_list_from_csv(csv_path: str) -> list[dict[str, str]]:
     return item_list
 
 @Slot()
-def expect_items_from_docx(template_path: str) -> dict[str, list[str]]:
+def expect_items_from_docx(template_path: str) -> dict[str, str | list[str]]:
     document = Document(template_path)
     text = "\n".join([paragraph.text for paragraph in document.paragraphs])
-    unit_variables = [re.sub("\\$?\\`","",var) for var in list(set(re.findall("\\$`[UNIT.]?\\w+`", text)))]
-    item_variables = [re.sub("\\$?\\`","",var) for var in list(set(re.findall("\\$`\\w+[.]\\w+`", text)))]
+    unit_variables = list(set([re.sub(rf"\$|\`|UNIT|\.","",var) for var in (re.findall(rf"\$\`UNIT\.\w+\`|\$\`\.?\w+\`", text))]))
+    item_variables = [re.sub(rf"\$|\`","",var) for var in list(set(re.findall(rf"\$`\w+[.]\w+`", text)))]
 
     items = dict()
     for item_name in list(set([var.split('.')[0] for var in item_variables])):
@@ -61,7 +98,8 @@ def generate_final_input_item(expected_attributes:dict[str, str | list[str]], ch
             final[f"{item_name}.{var}"] = item[var]
             
     for unit_name in expected_attributes['UNIT']:
-        final[unit_name] = chosen_attributes[unit_name]
+        if not PRESET_VARIABLES.__contains__(unit_name):
+            final[unit_name] = chosen_attributes[unit_name]
 
     return final
 
