@@ -253,13 +253,13 @@ class Window(QtWidgets.QWidget):
         
         def generate_document_and_return_home(choices:dict[str, str], output_path:str = "output.docx"):
             final_input_item = docG.generate_final_input_item(docG.expect_items_from_docx(template_path), extract_paths_and_names_from_QtWidgets(choices))
-            docG.generate_docx_with_applied_item(template_path,"./"+output_path, final_input_item)
+            docG.generate_docx_with_applied_item(template_path,"./contents/"+output_path, final_input_item)
             self.home()
       
         def validate_and_generate(choices:dict[str, str], output_path:str = "output.docx"):
             for name, value in extract_paths_and_names_from_QtWidgets(choices).items():
                 value = value.strip() if isinstance(value, str) else value
-                if value == "" or value == {'path':"./items/", 'id':""}:
+                if value == "" or value == {'path':"./contents/items/", 'id':""}:
                     QtWidgets.QMessageBox.warning(self, "Warning", f"Please fill in all fields. Missing: {name}")
                     return
             generate_document_and_return_home(choices, output_path)

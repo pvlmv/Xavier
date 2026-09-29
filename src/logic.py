@@ -15,26 +15,26 @@ def substitute_with_current_date(text:str) -> str:
                 with open("./contents/config.txt") as f:
                     for line in f.readlines():
                         if line.split(' ')[0] == "default_date_format": 
-                            format = " ".join(line.split(' ')[1::])
+                            format = " ".join(line.split(' ')[1::]).strip()
                             break
                         else: format = "%d.%m.%Y"
             except:
                 format = "%d.%m.%Y"
         return format
     
-    text = re.sub(rf"\$`current_date_formated\(\)`|\$`current_date_formated`",datetime.now().strftime(get_date_format()),text)
+    text = re.sub(rf"\$`current_date_formatted\(\)`|\$`current_date_formatted`",datetime.now().strftime(get_date_format()),text)
     
-    date_to_replace = re.findall(rf"\$`current_date_formated\(?.*\)?`", text)
+    date_to_replace = re.findall(rf"\$`current_date_formatted\(?.*\)?`", text)
     if date_to_replace == []:
         return text
     
     for date in date_to_replace:
         format = get_date_format(date)
-        text = re.sub(rf"\$`current_date_formated\({re.escape(format)}\)`", datetime.now().strftime(format), text)
+        text = re.sub(rf"\$`current_date_formatted\({re.escape(format)}\)`", datetime.now().strftime(format), text)
     return text
 
 PRESET_VARIABLES = {
-    "current_date_formated" : substitute_with_current_date,
+    "current_date_formatted": substitute_with_current_date,
 }
 
 def open_word_document(docx_path: str):
@@ -54,7 +54,7 @@ def generate_docx_with_applied_item(template_path: str, output_path: str, item :
     document = Document(output_path)
     values : dict[str, callable] = {name: lambda text, name=name: re.sub(rf"\$\`UNIT\.{re.escape(name)}\`|\$\`\.?{re.escape(name)}\`", str(item[name]), text) for name in item.keys()}
     values.update(PRESET_VARIABLES)
-    values["current_date_formated"] = substitute_with_current_date
+    values["current_date_formatted"] = substitute_with_current_date
     
     for paragraph in document.paragraphs:
         if paragraph.text.__contains__("$`"):
