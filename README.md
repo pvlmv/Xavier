@@ -1,3 +1,3 @@
 # Xavier - Installation
 
-Simply unpack the .zip file in the desired location and add a shortcut to the Xavier.exe file to your desktop.
+Unpack the .zip file in the desired location. Locate Xavier.exe, right-click into properties and check the "Unlock" option. It is recommended you add a shortcut to the .exe file.
