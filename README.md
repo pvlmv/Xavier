@@ -76,28 +76,17 @@ SOFTWARE.
 
 ## Windows distribution
 
-A prebuilt executable is available from the
-[windows-download branch](https://github.com/pvlmv/Xavier/blob/windows-download/Xavier.zip).
-
-To build the application on Windows, run these commands from the project root:
+Build on Windows from the project root with the project environment activated:
 
 ```powershell
-py -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -r requirements.txt
-.\.venv\Scripts\python.exe -m pip install pyinstaller
-.\.venv\Scripts\pyinstaller.exe --noconfirm --clean --onedir --windowed --name Xavier --icon src\img\icon.ico --contents-directory . --paths . --add-data "contents;contents" --add-data "src\img;src\img" src\main.py
+.\Scripts\pyinstaller.exe --noconfirm --clean Xavier.spec
 ```
 
-The build creates `dist\Xavier`. Distribute the entire folder, including
-`Xavier.exe` and `contents`. Users can add or edit templates and CSV files in
-`contents`; Xavier also saves settings and generated documents there. Install
-the distribution in a location where users have write permission.
+The build creates a windowed, one-folder distribution at `dist\Xavier`. Distribute
+the entire folder; users can start `Xavier.exe`. The editable `contents` folder
+(templates, item CSVs, and settings) is placed beside the executable so users can
+add or modify content. Keep the distribution in a folder where users have write
+permissions, since settings and generated documents are saved there.
 
-Build on Windows for the same architecture as the target PCs. PyInstaller does
-not cross-compile Windows executables from other operating systems.
-
-## Feedback
-
-For questions or feedback, contact the author on
-[LinkedIn](https://www.linkedin.com/in/tymon-racinski-667bb6372/).
-If you find Xavier helpful please post about it and tag me. **Thank you.**
+Build with the same architecture as the target Windows PCs. PyInstaller does not
+cross-compile Windows executables from other operating systems.
