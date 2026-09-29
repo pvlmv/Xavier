@@ -1,4 +1,3 @@
-# Xavier
+# Xavier - Installation
 
-An easy to use docx templater with loadable customisable content.
-
+Simply unpack the .zip file in the desired location and add a shortcut to the Xavier.exe file to your desktop.

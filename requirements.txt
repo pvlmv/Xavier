@@ -1,3 +1,0 @@
-PyYAML
-PySide6
-python-docx
